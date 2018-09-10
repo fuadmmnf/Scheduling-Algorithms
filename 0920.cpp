@@ -4,14 +4,15 @@ using namespace std;
 
 struct process
 {
+    int pid ;
     string processName;
     double burstTime;
     double timeTaken=0;
     int priority;
     double arrivalTime;
     double waitingTime=0;
-    double turnAroundTime ;
-    bool complete=false;
+    double turnAroundTime = waitingTime + burstTime;
+    bool isComplete=false;
 };
 
 
@@ -20,7 +21,7 @@ struct burstTimeComp
 {
     bool operator()(const process i,const process j)
     {
-         return (i.burstTime-i.timeTaken) < (j.burstTime-j.timeTaken);
+         return (i.burstTime-i.timeTaken) > (j.burstTime-j.timeTaken);
     }
 };
 
@@ -37,7 +38,7 @@ struct priorityComp
 {
     bool operator()(const process i, const process j)
     {
-         return i.priority < j.priority;
+         return i.priority > j.priority;
     }
 };
 
@@ -78,7 +79,7 @@ void shortestJobFirst(process *proc,int procNum)
     int doneCount=0;
     int currPos=0;
 
-    priority_queue<process, vector<process>, burstTimeComp > pQ;    
+    priority_queue<process, vector<process>, burstTimeComp > que;    
     
 
 
@@ -91,38 +92,42 @@ void shortestJobFirst(process *proc,int procNum)
 
             if(i == proc[curr].arrivalTime)
             {
-                pQ.push(proc[curr]);   
+                que.push(proc[curr]);   
                 currPos= curr+1;
             }
             else break;
         }  
 
-        if(!pQ.empty())
+        if(!que.empty())
         {
 
-            process currProcess = pQ.top();
-            pQ.pop();
-            currProcess.timeTaken++;
-            currProcess.waitingTime--;
+            process currProcess = que.top();
+            que.pop();
+            proc[currProcess.pid].timeTaken++;
+            proc[currProcess.pid].waitingTime--;
 
+    
             for(int curr=currPos-1; curr>=0; curr--)
             {
-                if(!proc[curr].complete)
+                if(!proc[curr].isComplete)
                     proc[curr].waitingTime++;
             }
+           
 
-            if(currProcess.burstTime == currProcess.timeTaken)
+
+            if(proc[currProcess.pid].burstTime == proc[currProcess.pid].timeTaken)
             {
-                currProcess.complete = true;
-                currProcess.turnAroundTime = currProcess.waitingTime + currProcess.burstTime;
+                proc[currProcess.pid].isComplete = true;
+                proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
+                //cout<<endl<<currProcess.waitingTime<<endl;
 
                 if(doneCount) cout<<"->";
-                cout<<currProcess.processName;
+                cout<<proc[currProcess.pid].processName;
 
                 doneCount++;
                
             }
-            else pQ.push(currProcess);
+            else que.push(proc[currProcess.pid]);
         }
     }
    
@@ -131,27 +136,77 @@ void shortestJobFirst(process *proc,int procNum)
 
 void roundRobin(process *proc,int procNum)
 {
-    int doneNum=0;
-    int time;
-    cin>>time;
+    long long i;
+    int roundTime, roundTimeSpent=0;
+    int doneCount=0;
+    int currPos=0;
 
-    while(true)
+    queue<process> que;
+        
+    cout<<"Enter Round Time: ";
+    cin>>roundTime;
+    cout<<endl<<endl;
+
+    for(i=0; doneCount!=procNum; i++ )
     {
-        if(doneNum==procNum) break;
-        for(int i=0;i<procNum;i++)
+
+
+        for(int curr = currPos; curr<procNum; curr++)
         {
-            if(proc[i].timeTaken<proc[i].burstTime)
-                proc[i].timeTaken+=time;
-            else
+
+            if(i == proc[curr].arrivalTime)
             {
-                if(!proc[i].complete)
-                {
-                    cout<<proc[i].processName<<endl;
-                    doneNum++;
-                }
-                proc[i].complete=true;
+                que.push(proc[curr]);   
+                currPos= curr+1;
             }
+            else break;
+        }  
+
+        if(!que.empty())
+        {
+
+            process currProcess = que.front();
+            proc[currProcess.pid].timeTaken++;
+            proc[currProcess.pid].waitingTime--;
+
+    
+            for(int curr=currPos-1; curr>=0; curr--)
+            {
+                if(!proc[curr].isComplete)
+                    proc[curr].waitingTime++;
+            }
+           
+
+
+            if(proc[currProcess.pid].burstTime == proc[currProcess.pid].timeTaken)
+            {
+                proc[currProcess.pid].isComplete = true;
+                proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
+                roundTimeSpent=-1;
+
+                que.pop();
+                proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
+                //cout<<endl<<currProcess.waitingTime<<endl;
+
+                if(doneCount) cout<<"->";
+                cout<<proc[currProcess.pid].processName;
+
+                doneCount++;
+               
+            }
+            else if(roundTimeSpent == roundTime)
+            {
+                roundTimeSpent=-1;
+                que.pop();
+                que.push(proc[currProcess.pid]);
+            }
+            
+
+            roundTimeSpent++;
+
+            
         }
+   
     }
 }
 
@@ -165,7 +220,7 @@ void priority(process *proc,int procNum)
     int doneCount=0;
     int currPos=0;
 
-    priority_queue<process, vector<process>, priorityComp > pQ;
+    priority_queue<process, vector<process>, priorityComp > que;
     
 
     for(i=0; doneCount!=procNum; i++ )
@@ -177,38 +232,38 @@ void priority(process *proc,int procNum)
 
             if(i == proc[curr].arrivalTime)
             {
-                pQ.push(proc[curr]);   
+                que.push(proc[curr]);   
                 currPos= curr+1;
             }
             else break;
         }  
 
-        if(!pQ.empty())
+        if(!que.empty())
         {
 
-            process currProcess = pQ.top();
-            pQ.pop();
-            currProcess.timeTaken++;
-            currProcess.waitingTime--;
+            process currProcess = que.top();
+            que.pop();
+            proc[currProcess.pid].timeTaken++;
+            proc[currProcess.pid].waitingTime--;
 
             for(int curr=currPos-1; curr>=0; curr--)
             {
-                if(!proc[curr].complete)
+                if(!proc[curr].isComplete)
                     proc[curr].waitingTime++;
             }
 
-            if(currProcess.burstTime == currProcess.timeTaken)
+            if(proc[currProcess.pid].burstTime == proc[currProcess.pid].timeTaken)
             {
-                currProcess.complete = true;
-                currProcess.turnAroundTime = currProcess.waitingTime + currProcess.burstTime;
+                proc[currProcess.pid].isComplete = true;
+                proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
 
                 if(doneCount) cout<<"->";
-                cout<<currProcess.processName<<endl;
+                cout<<proc[currProcess.pid].processName<<endl;
 
                 doneCount++;
                
             }
-            else pQ.push(currProcess);
+            else que.push(proc[currProcess.pid]);
         }
     }
 }
@@ -225,7 +280,6 @@ void priority(process *proc,int procNum)
 
 void showProcessInfo(process *proc, int n)
 {
-    cout<<proc[0].processName<<endl;
 
     printf("%-15s%-15s%-15s\n\n", "Process Name", "Waiting Time", "Turn-around Time");
     for(int i=0;i<n;i++)
@@ -245,14 +299,19 @@ int main()
 
     proc = new process[n];
     for(int i=0;i<n;i++)
-        cin>>proc[i].processName>>proc[i].arrivalTime>>proc[i].burstTime;
+    {
+        cin>>proc[i].processName>>proc[i].arrivalTime>>proc[i].burstTime;\
+        
+    }
     cout<<endl<<endl<<endl;
 
     sort(proc, proc+n, arrivalComp() );
+    for(int i=0;i<n;i++)
+        proc[i].pid = i;
 
     //firstComeFirst(proc,n);
-    shortestJobFirst(proc, n);
-    //roundRobin(proc,n);
+    //shortestJobFirst(proc, n);
+    roundRobin(proc,n);
     //priority(proc,n);
    
     cout<<endl<<endl;
