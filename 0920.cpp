@@ -119,7 +119,7 @@ void shortestJobFirst(process *proc,int procNum)
             {
                 proc[currProcess.pid].isComplete = true;
                 proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
-                //cout<<endl<<currProcess.waitingTime<<endl;
+
 
                 if(doneCount) cout<<"->";
                 cout<<proc[currProcess.pid].processName;
@@ -186,7 +186,7 @@ void roundRobin(process *proc,int procNum)
 
                 que.pop();
                 proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
-                //cout<<endl<<currProcess.waitingTime<<endl;
+    
 
                 if(doneCount) cout<<"->";
                 cout<<proc[currProcess.pid].processName;
@@ -221,7 +221,10 @@ void priority(process *proc,int procNum)
     int currPos=0;
 
     priority_queue<process, vector<process>, priorityComp > que;
-    
+        
+    cout<<"Enter process priority: "<<endl;
+    for(int i=0;i<procNum;i++)
+        cin>>proc[i].priority;
 
     for(i=0; doneCount!=procNum; i++ )
     {
@@ -258,7 +261,7 @@ void priority(process *proc,int procNum)
                 proc[currProcess.pid].turnAroundTime = proc[currProcess.pid].waitingTime + proc[currProcess.pid].burstTime;
 
                 if(doneCount) cout<<"->";
-                cout<<proc[currProcess.pid].processName<<endl;
+                cout<<proc[currProcess.pid].processName;
 
                 doneCount++;
                
@@ -311,8 +314,8 @@ int main()
 
     //firstComeFirst(proc,n);
     //shortestJobFirst(proc, n);
-    roundRobin(proc,n);
-    //priority(proc,n);
+    //roundRobin(proc,n);
+    priority(proc,n);
    
     cout<<endl<<endl;
 
