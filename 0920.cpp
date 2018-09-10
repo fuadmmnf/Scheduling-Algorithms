@@ -10,7 +10,7 @@ struct process
     int priority;
     double arrivalTime;
     double waitingTime=0;
-    double turnAroundTime = waitingTime + burstTime;
+    double turnAroundTime ;
     bool complete=false;
 };
 
@@ -20,7 +20,7 @@ struct burstTimeComp
 {
     bool operator()(const process i,const process j)
     {
-         return i.burstTime < j.burstTime;
+         return (i.burstTime-i.timeTaken) < (j.burstTime-j.timeTaken);
     }
 };
 
@@ -48,14 +48,41 @@ struct priorityComp
 
 
 
-void schedulingJob(process *proc,int procNum, priority_queue<process, vector<process>, burstTimeComp > &pQ)
+
+
+
+
+void firstComeFirst(process *proc,int procNum)
+{
+    for(int i=0;i<procNum;i++)
+    {
+        if(i) cout<<"->";
+        cout<<proc[i].processName;
+        
+        if(i)
+        {
+            if(proc[i-1].arrivalTime+ proc[i-1].turnAroundTime > proc[i].arrivalTime)
+                proc[i].waitingTime = proc[i-1].arrivalTime+ proc[i-1].turnAroundTime - proc[i].arrivalTime;
+
+            proc[i].turnAroundTime = proc[i].waitingTime + proc[i].burstTime;
+        }
+
+    }
+
+}
+
+
+void shortestJobFirst(process *proc,int procNum)
 {
     long long i;
     int doneCount=0;
     int currPos=0;
 
+    priority_queue<process, vector<process>, burstTimeComp > pQ;    
+    
 
-     for(i=0; doneCount!=procNum; i++ )
+
+    for(i=0; doneCount!=procNum; i++ )
     {
 
 
@@ -87,9 +114,10 @@ void schedulingJob(process *proc,int procNum, priority_queue<process, vector<pro
             if(currProcess.burstTime == currProcess.timeTaken)
             {
                 currProcess.complete = true;
+                currProcess.turnAroundTime = currProcess.waitingTime + currProcess.burstTime;
 
                 if(doneCount) cout<<"->";
-                cout<<currProcess.processName<<endl;
+                cout<<currProcess.processName;
 
                 doneCount++;
                
@@ -97,37 +125,7 @@ void schedulingJob(process *proc,int procNum, priority_queue<process, vector<pro
             else pQ.push(currProcess);
         }
     }
-}
-
-
-
-
-
-
-void firstComeFirst(process *proc,int procNum)
-{
-    for(int i=0;i<procNum;i++)
-    {
-        if(i) cout<<"->";
-        cout<<proc[i].processName<<endl;
-        
-        if(i)
-        {
-            if(proc[i-1].arrivalTime+ proc[i-1].turnAroundTime > proc[i].arrivalTime)
-                proc[i].waitingTime = proc[i-1].arrivalTime+ proc[i-1].turnAroundTime - proc[i].arrivalTime;
-        }
-
-    }
-
-}
-
-
-void shortestJobFirst(process *proc,int procNum)
-{
-    
-    priority_queue<process, vector<process>, burstTimeComp > pQ;    
-    schedulingJob(proc,procNum,pQ);
-
+   
 }
 
 
@@ -163,9 +161,56 @@ void roundRobin(process *proc,int procNum)
 
 void priority(process *proc,int procNum)
 {
+    long long i;
+    int doneCount=0;
+    int currPos=0;
 
     priority_queue<process, vector<process>, priorityComp > pQ;
-    schedulingJob(proc,procNum,pQ);
+    
+
+    for(i=0; doneCount!=procNum; i++ )
+    {
+
+
+        for(int curr = currPos; curr<procNum; curr++)
+        {
+
+            if(i == proc[curr].arrivalTime)
+            {
+                pQ.push(proc[curr]);   
+                currPos= curr+1;
+            }
+            else break;
+        }  
+
+        if(!pQ.empty())
+        {
+
+            process currProcess = pQ.top();
+            pQ.pop();
+            currProcess.timeTaken++;
+            currProcess.waitingTime--;
+
+            for(int curr=currPos-1; curr>=0; curr--)
+            {
+                if(!proc[curr].complete)
+                    proc[curr].waitingTime++;
+            }
+
+            if(currProcess.burstTime == currProcess.timeTaken)
+            {
+                currProcess.complete = true;
+                currProcess.turnAroundTime = currProcess.waitingTime + currProcess.burstTime;
+
+                if(doneCount) cout<<"->";
+                cout<<currProcess.processName<<endl;
+
+                doneCount++;
+               
+            }
+            else pQ.push(currProcess);
+        }
+    }
 }
 
 
@@ -180,10 +225,11 @@ void priority(process *proc,int procNum)
 
 void showProcessInfo(process *proc, int n)
 {
-    printf("%-12s%-12s%-12s\n\n", "Process Name", "Waiting Time", "Turn-around Time");
+    cout<<proc[0].processName<<endl;
 
+    printf("%-15s%-15s%-15s\n\n", "Process Name", "Waiting Time", "Turn-around Time");
     for(int i=0;i<n;i++)
-        printf("%-12s%-12d%-12d\n", proc[i].processName, proc[i].waitingTime, proc[i].turnAroundTime);
+        cout<< proc[i].processName <<"\t\t" << proc[i].waitingTime <<"\t\t"<< proc[i].turnAroundTime<<endl;
 }
 
 
@@ -200,15 +246,18 @@ int main()
     proc = new process[n];
     for(int i=0;i<n;i++)
         cin>>proc[i].processName>>proc[i].arrivalTime>>proc[i].burstTime;
+    cout<<endl<<endl<<endl;
 
-    sort(proc,proc+n, arrivalComp);
+    sort(proc, proc+n, arrivalComp() );
 
     //firstComeFirst(proc,n);
-    shortestJobFirst(proc,n);
+    shortestJobFirst(proc, n);
     //roundRobin(proc,n);
     //priority(proc,n);
+   
+    cout<<endl<<endl;
 
-    showProcessInfo(proc,n);
+    showProcessInfo(proc, n);
 
     return 0;
 }
